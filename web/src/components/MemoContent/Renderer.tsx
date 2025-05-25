@@ -1,3 +1,4 @@
+import { useContext } from "react";
 import {
   AutoLinkNode,
   BlockquoteNode,
@@ -61,6 +62,7 @@ import Tag from "./Tag";
 import TaskListItem from "./TaskListItem";
 import Text from "./Text";
 import UnorderedListItem from "./UnorderedListItem";
+import { RendererContext } from "./types";
 
 interface Props {
   index: string;
@@ -68,13 +70,15 @@ interface Props {
 }
 
 const Renderer: React.FC<Props> = ({ index, node }: Props) => {
+  const context = useContext(RendererContext);
+
   switch (node.type) {
     case NodeType.LINE_BREAK:
       return <LineBreak />;
     case NodeType.PARAGRAPH:
       return <Paragraph index={index} {...(node.paragraphNode as ParagraphNode)} />;
     case NodeType.CODE_BLOCK:
-      return <CodeBlock index={index} {...(node.codeBlockNode as CodeBlockNode)} />;
+      return <CodeBlock index={index} {...(node.codeBlockNode as CodeBlockNode)} memoName={context.memoName} />;
     case NodeType.HEADING:
       return <Heading index={index} {...(node.headingNode as HeadingNode)} />;
     case NodeType.HORIZONTAL_RULE:

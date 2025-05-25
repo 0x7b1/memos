@@ -3,22 +3,28 @@ import hljs from "highlight.js";
 import { CopyIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
+import { useMemoStore } from "@/store/v1";
+import { Memo } from "@/types/proto/api/v1/memo_service";
 import { cn } from "@/utils";
 import MermaidBlock from "./MermaidBlock";
+import StrudelBlock from "./StrudelBlock";
 import { BaseProps } from "./types";
 
 // Special languages that are rendered differently.
 enum SpecialLanguage {
   HTML = "__html",
   MERMAID = "mermaid",
+  STRUDEL = "strudel",
 }
 
 interface Props extends BaseProps {
   language: string;
   content: string;
+  memoName?: string;
 }
 
-const CodeBlock: React.FC<Props> = ({ language, content }: Props) => {
+const CodeBlock: React.FC<Props> = ({ language, content, memoName }: Props) => {
+  const memoStore = useMemoStore();
   const formatedLanguage = useMemo(() => (language || "").toLowerCase() || "text", [language]);
 
   // Users can set Markdown code blocks as `__html` to render HTML directly.
@@ -33,6 +39,31 @@ const CodeBlock: React.FC<Props> = ({ language, content }: Props) => {
     );
   } else if (formatedLanguage === SpecialLanguage.MERMAID) {
     return <MermaidBlock content={content} />;
+  } else if (formatedLanguage === SpecialLanguage.STRUDEL) {
+    return (
+      <StrudelBlock
+        content={content}
+        onSave={async (code) => {
+          if (!memoName) {
+            // TODO: handle case where memoName is not provided
+            console.error("memoName is not provided to CodeBlock for Strudel onSave");
+            toast.error("Failed to save: memo identifier missing.");
+            return;
+          }
+          const prevMemo = await memoStore.getOrFetchMemoByName(memoName);
+          if (prevMemo) {
+            const memoPatch: Partial<Memo> = {
+              name: prevMemo.name,
+              content: code,
+            };
+            await memoStore.updateMemo(memoPatch, ["content", "update_time"]);
+            toast.success("Saved!");
+          } else {
+            toast.error("Failed to save: original memo not found.");
+          }
+        }}
+      />
+    );
   }
 
   const highlightedCode = useMemo(() => {
