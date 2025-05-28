@@ -114,13 +114,10 @@ const Link: React.FC<Props> = ({ content, url }: Props) => {
           />
         )}
         <span>{linkContent}</span>
-      </MLink>
-
-      {/* <MLink underline="always" target="_blank" href={url} rel="noopener noreferrer">
-        <span onMouseEnter={handleMouseEnter} onMouseLeave={() => setShowTooltip(false)}>
+        {/* <span onMouseEnter={handleMouseEnter} onMouseLeave={() => setShowTooltip(false)}>
           {content ? content.map((child, index) => <Renderer key={`${child.type}-${index}`} index={String(index)} node={child} />) : url}
-        </span>
-      </MLink> */}
+        </span> */}
+      </MLink>
     </Tooltip>
   );
 };

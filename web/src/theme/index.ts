@@ -1,6 +1,9 @@
 import { extendTheme } from "@mui/joy";
 
 const theme = extendTheme({
+  fontFamily: {
+    body: '"Inter", sans-serif',
+  },
   components: {
     JoyButton: {
       defaultProps: {
