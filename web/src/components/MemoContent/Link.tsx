@@ -1,5 +1,5 @@
 import { Link as MLink, Tooltip } from "@mui/joy";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { markdownServiceClient } from "@/grpcweb";
 import { workspaceStore } from "@/store/v2";
 import { LinkMetadata, Node } from "@/types/proto/api/v1/markdown_service";
@@ -10,10 +10,25 @@ interface Props {
   content?: Node[];
 }
 
-const getFaviconWithGoogleS2 = (url: string) => {
+const getDisplayUrl = (url: string): string => {
+  try {
+    const urlObj = new URL(url);
+    const isHttpDefaultPort = urlObj.protocol === "http:" && (urlObj.port === "80" || urlObj.port === "");
+    const isHttpsDefaultPort = urlObj.protocol === "https:" && (urlObj.port === "443" || urlObj.port === "");
+
+    if (urlObj.pathname === "/" && !urlObj.search && !urlObj.hash && (isHttpDefaultPort || isHttpsDefaultPort)) {
+      return urlObj.hostname.replace(/^www\./, "");
+    }
+    return url;
+  } catch {
+    return url;
+  }
+};
+
+const getFaviconWithGoogleS2 = (url: string, size: number = 128) => {
   try {
     const urlObject = new URL(url);
-    return `https://www.google.com/s2/favicons?sz=128&domain=${urlObject.hostname}`;
+    return `https://www.google.com/s2/favicons?sz=${size}&domain=${urlObject.hostname}`;
   } catch {
     return undefined;
   }
@@ -24,6 +39,12 @@ const Link: React.FC<Props> = ({ content, url }: Props) => {
   const [initialized, setInitialized] = useState<boolean>(false);
   const [showTooltip, setShowTooltip] = useState<boolean>(false);
   const [linkMetadata, setLinkMetadata] = useState<LinkMetadata | undefined>();
+  const [favicon, setFavicon] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    const favUrl = getFaviconWithGoogleS2(url, 64);
+    setFavicon(favUrl);
+  }, [url]);
 
   const handleMouseEnter = async () => {
     if (!workspaceMemoRelatedSetting.enableLinkPreview) {
@@ -41,6 +62,14 @@ const Link: React.FC<Props> = ({ content, url }: Props) => {
       setInitialized(true);
     }
   };
+
+  const handleMouseLeave = () => {
+    setShowTooltip(false);
+  };
+
+  const linkContent = content
+    ? content.map((child, index) => <Renderer key={`${child.type}-${index}`} index={String(index)} node={child} />)
+    : getDisplayUrl(url);
 
   return (
     <Tooltip
@@ -64,11 +93,34 @@ const Link: React.FC<Props> = ({ content, url }: Props) => {
       open={showTooltip}
       arrow
     >
-      <MLink underline="always" target="_blank" href={url} rel="noopener noreferrer">
+      <MLink
+        className={"inline-flex items-center align-middle"}
+        underline="hover"
+        target="_blank"
+        href={url}
+        rel="noopener noreferrer"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
+        {favicon && (
+          <img
+            src={favicon}
+            alt="favicon"
+            className="w-4 h-4 mr-1.5 flex-shrink-0 align-text-bottom rounded-sm"
+            onError={(e) => {
+              e.currentTarget.style.display = "none";
+              setFavicon(undefined);
+            }}
+          />
+        )}
+        <span>{linkContent}</span>
+      </MLink>
+
+      {/* <MLink underline="always" target="_blank" href={url} rel="noopener noreferrer">
         <span onMouseEnter={handleMouseEnter} onMouseLeave={() => setShowTooltip(false)}>
           {content ? content.map((child, index) => <Renderer key={`${child.type}-${index}`} index={String(index)} node={child} />) : url}
         </span>
-      </MLink>
+      </MLink> */}
     </Tooltip>
   );
 };
