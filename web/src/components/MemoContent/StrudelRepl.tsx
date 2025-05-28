@@ -124,7 +124,7 @@ export function StrudelRepl({ theme, tune, hideHeader = false, onTrigger, onSave
     editor.setFontFamily("Input Mono Condensed");
     editor.setTheme(theme);
     editor.setLineNumbersDisplayed(false);
-    editor.setLineWrappingEnabled(true);
+    editor.setLineWrappingEnabled(false);
 
     editorRef.current = editor;
   }, []);
