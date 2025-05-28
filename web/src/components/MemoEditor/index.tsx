@@ -8,7 +8,7 @@ import DatePicker from "react-datepicker";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import useLocalStorage from "react-use/lib/useLocalStorage";
-import { memoServiceClient } from "@/grpcweb";
+import { memoServiceClient, markdownServiceClient } from "@/grpcweb";
 import { TAB_SPACE_WIDTH } from "@/helpers/consts";
 import { isValidUrl } from "@/helpers/utils";
 import useAsyncEffect from "@/hooks/useAsyncEffect";
@@ -19,6 +19,7 @@ import { Resource } from "@/types/proto/api/v1/resource_service";
 import { UserSetting } from "@/types/proto/api/v1/user_service";
 import { useTranslate } from "@/utils/i18n";
 import { convertVisibilityFromString, convertVisibilityToString } from "@/utils/memo";
+import { isImage } from "@/utils/resource";
 import VisibilityIcon from "../VisibilityIcon";
 import AddMemoRelationPopover from "./ActionButton/AddMemoRelationPopover";
 import LocationSelector from "./ActionButton/LocationSelector";
@@ -289,16 +290,64 @@ const MemoEditor = observer((props: Props) => {
   };
 
   const handlePasteEvent = async (event: React.ClipboardEvent) => {
-    if (event.clipboardData && event.clipboardData.files.length > 0) {
+    const clipboardData = event.clipboardData;
+    if (!clipboardData || !editorRef.current) {
+      return;
+    }
+
+    if (clipboardData.files.length > 0) {
       event.preventDefault();
-      await uploadMultiFiles(event.clipboardData.files);
-    } else if (
-      editorRef.current != null &&
-      editorRef.current.getSelectedContent().length != 0 &&
-      isValidUrl(event.clipboardData.getData("Text"))
-    ) {
+      await uploadMultiFiles(clipboardData.files);
+      return;
+    }
+
+    const pastedText = clipboardData.getData("text/plain");
+    if (!pastedText) {
+      return;
+    }
+
+    const selectedContent = editorRef.current.getSelectedContent();
+    if (selectedContent.length > 0 && isValidUrl(pastedText)) {
       event.preventDefault();
-      hyperlinkHighlightedText(editorRef.current, event.clipboardData.getData("Text"));
+      hyperlinkHighlightedText(editorRef.current, pastedText);
+      return;
+    }
+
+    const urlRegex = /^(https?:\/\/[^\s]+)$/gi;
+    const matches = Array.from(pastedText.matchAll(urlRegex));
+
+    if (matches.length > 0) {
+      event.preventDefault();
+      let tempPastedText = pastedText;
+      const isShiftPressed = (event.nativeEvent as any)?.shiftKey;
+
+      for (let i = matches.length - 1; i >= 0; i--) {
+        const match = matches[i];
+        const url = match[0];
+        const urlStartIndex = match.index as number;
+
+        const textBefore = tempPastedText.substring(Math.max(0, urlStartIndex - 2), urlStartIndex);
+        const textAfter = tempPastedText.substring(urlStartIndex + url.length, urlStartIndex + url.length + 1);
+        const isAlreadyMarkdownLink = textBefore.endsWith("](") && textAfter.startsWith(")");
+        const isMemosEmbed = textBefore.endsWith("![[") && textAfter.startsWith("]]");
+        const isMemosRef = textBefore.endsWith("((") && textAfter.startsWith("))");
+
+        if (isShiftPressed || isAlreadyMarkdownLink || isMemosEmbed || isMemosRef || isImage(url)) {
+          continue;
+        }
+
+        try {
+          const metadata = await markdownServiceClient.getLinkMetadata({ link: url });
+          if (metadata.title) {
+            const markdownLink = `[${metadata.title}](${url})`;
+            tempPastedText =
+              tempPastedText.substring(0, urlStartIndex) + markdownLink + tempPastedText.substring(urlStartIndex + url.length);
+          }
+        } catch (error) {
+          console.warn(`Failed to get title for ${url}:`, error);
+        }
+      }
+      editorRef.current.insertText(tempPastedText);
     }
   };
 
