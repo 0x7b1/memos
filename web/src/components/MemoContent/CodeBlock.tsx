@@ -3,7 +3,7 @@ import hljs from "highlight.js";
 import { CopyIcon } from "lucide-react";
 import { useCallback, useMemo } from "react";
 import toast from "react-hot-toast";
-import { useMemoStore } from "@/store/v1";
+import { memoStore } from "@/store/v2";
 import { Memo } from "@/types/proto/api/v1/memo_service";
 import { cn } from "@/utils";
 import MermaidBlock from "./MermaidBlock";
@@ -24,7 +24,7 @@ interface Props extends BaseProps {
 }
 
 const CodeBlock: React.FC<Props> = ({ language, content, memoName }: Props) => {
-  const memoStore = useMemoStore();
+  const { getOrFetchMemoByName, updateMemo } = memoStore;
   const formatedLanguage = useMemo(() => (language || "").toLowerCase() || "text", [language]);
 
   // Users can set Markdown code blocks as `__html` to render HTML directly.
@@ -50,13 +50,13 @@ const CodeBlock: React.FC<Props> = ({ language, content, memoName }: Props) => {
             toast.error("Failed to save: memo identifier missing.");
             return;
           }
-          const prevMemo = await memoStore.getOrFetchMemoByName(memoName);
+          const prevMemo = await getOrFetchMemoByName(memoName);
           if (prevMemo) {
             const memoPatch: Partial<Memo> = {
               name: prevMemo.name,
               content: code,
             };
-            await memoStore.updateMemo(memoPatch, ["content", "update_time"]);
+            await updateMemo(memoPatch, ["content", "update_time"]);
             toast.success("Saved!");
           } else {
             toast.error("Failed to save: original memo not found.");
