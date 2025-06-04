@@ -1,13 +1,14 @@
 import { Select, Option, Divider } from "@mui/joy";
-import { Button } from "@usememos/mui";
+// import { Button } from "@usememos/mui";
 import { isEqual } from "lodash-es";
-import { LoaderIcon, SendIcon } from "lucide-react";
+import { ArrowRightIcon, ArrowUpIcon, LoaderIcon, SendIcon } from "lucide-react";
 import { observer } from "mobx-react-lite";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import DatePicker from "react-datepicker";
 import { toast } from "react-hot-toast";
 import { useTranslation } from "react-i18next";
 import useLocalStorage from "react-use/lib/useLocalStorage";
+import { Button } from "@/components/ui/button";
 import { memoServiceClient, markdownServiceClient } from "@/grpcweb";
 import { TAB_SPACE_WIDTH } from "@/helpers/consts";
 import { isValidUrl } from "@/helpers/utils";
@@ -517,7 +518,7 @@ const MemoEditor = observer((props: Props) => {
       <div
         className={`${
           className ?? ""
-        } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 px-4 pt-4 rounded-lg border ${
+        } relative w-full flex flex-col justify-start items-start bg-white dark:bg-zinc-800 px-4 pt-4 pb-2 rounded-lg border ${
           state.isDraggingFile
             ? "border-dashed border-gray-400 dark:border-primary-400 cursor-copy"
             : "border-gray-200 dark:border-zinc-700 cursor-auto"
@@ -563,9 +564,18 @@ const MemoEditor = observer((props: Props) => {
               }
             />
           </div>
+          <Button
+            disabled={!allowSave || state.isRequesting}
+            onClick={handleSaveBtnClick}
+            variant="ghost"
+            size="sm"
+            className="rounded-xl bg-zinc-100 dark:bg-zinc-700 hover:bg-zinc-200 dark:hover:bg-zinc-600"
+          >
+            {!state.isRequesting ? <ArrowUpIcon className="w-4 h-auto" /> : <LoaderIcon className="w-4 h-auto animate-spin" />}
+          </Button>
         </div>
-        <Divider className="!mt-2 opacity-40" />
-        <div className="w-full flex flex-row justify-between items-center py-3 gap-2 overflow-auto dark:border-t-zinc-500">
+        {/* <Divider className="!mt-2 opacity-40" /> */}
+        {/* <div className="w-full flex flex-row justify-between items-center py-3 gap-2 overflow-auto dark:border-t-zinc-500">
           <div className="relative flex flex-row justify-start items-center" onFocus={(e) => e.stopPropagation()}>
             <Select
               variant="plain"
@@ -587,16 +597,15 @@ const MemoEditor = observer((props: Props) => {
           </div>
           <div className="shrink-0 flex flex-row justify-end items-center gap-2">
             {props.onCancel && (
-              <Button variant="plain" disabled={state.isRequesting} onClick={handleCancelBtnClick}>
+              <Button variant="outline" disabled={state.isRequesting} onClick={handleCancelBtnClick}>
                 {t("common.cancel")}
               </Button>
             )}
-            <Button color="primary" disabled={!allowSave || state.isRequesting} onClick={handleSaveBtnClick}>
-              {t("editor.save")}
-              {!state.isRequesting ? <SendIcon className="w-4 h-auto ml-1" /> : <LoaderIcon className="w-4 h-auto ml-1 animate-spin" />}
+            <Button disabled={!allowSave || state.isRequesting} onClick={handleSaveBtnClick} variant="outline" size="sm">
+              {!state.isRequesting ? <SendIcon className="w-4 h-auto" /> : <LoaderIcon className="w-4 h-auto animate-spin" />}
             </Button>
           </div>
-        </div>
+        </div> */}
       </div>
     </MemoEditorContext.Provider>
   );

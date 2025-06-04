@@ -124,7 +124,7 @@ const MemoView: React.FC<Props> = observer((props: Props) => {
   return (
     <div
       className={cn(
-        "group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-white dark:border-zinc-800 hover:border-gray-200 dark:hover:border-zinc-700",
+        "group relative flex flex-col justify-start items-start w-full px-4 py-3 mb-2 gap-2 bg-white dark:bg-zinc-800 rounded-lg border border-gray-200 dark:border-zinc-700 hover:border-gray-200 dark:hover:border-zinc-700",
         className,
       )}
       ref={memoContainerRef}

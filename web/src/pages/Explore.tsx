@@ -2,15 +2,12 @@ import dayjs from "dayjs";
 import { useMemo } from "react";
 import MemoView from "@/components/MemoView";
 import PagedMemoList from "@/components/PagedMemoList";
-import useCurrentUser from "@/hooks/useCurrentUser";
 import { viewStore } from "@/store/v2";
 import memoFilterStore from "@/store/v2/memoFilter";
 import { Direction, State } from "@/types/proto/api/v1/common";
 import { Memo } from "@/types/proto/api/v1/memo_service";
 
 const Explore = () => {
-  const user = useCurrentUser();
-
   const memoListFilter = useMemo(() => {
     const conditions = [];
     const contentSearch: string[] = [];
@@ -41,11 +38,11 @@ const Explore = () => {
       conditions.push(`tag_search == [${tagSearch.join(", ")}]`);
     }
     return conditions.join(" && ");
-  }, [user, memoFilterStore.filters, viewStore.state.orderByTimeAsc]);
+  }, [memoFilterStore.filters]);
 
   return (
     <PagedMemoList
-      renderer={(memo: Memo) => <MemoView key={`${memo.name}-${memo.updateTime}`} memo={memo} showCreator showVisibility compact />}
+      renderer={(memo: Memo) => <MemoView key={`${memo.name}-${memo.updateTime}`} memo={memo} showVisibility showPinned compact />}
       listSort={(memos: Memo[]) =>
         memos
           .filter((memo) => memo.state === State.NORMAL)
@@ -56,7 +53,7 @@ const Explore = () => {
           )
       }
       direction={viewStore.state.orderByTimeAsc ? Direction.ASC : Direction.DESC}
-      oldFilter={memoListFilter}
+      filter={memoListFilter}
     />
   );
 };

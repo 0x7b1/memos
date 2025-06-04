@@ -75,7 +75,7 @@ const HomeLayout = observer(() => {
       <div
         className={cn(
           "w-full min-h-full transition-all duration-300 ease-in-out",
-          md ? (isSidebarOpen ? (lg ? "pl-72" : "pl-56") : "pl-16") : "",
+          md && (isSidebarOpen ? (lg ? "pl-72" : "pl-56") : "pl-0"),
         )}
       >
         <div className={cn("w-full mx-auto px-4 sm:px-6 md:pt-6 pb-8")}>
